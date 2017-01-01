@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <script   src="https://code.jquery.com/jquery-3.1.1.slim.js"   integrity="sha256-5i/mQ300M779N2OVDrl16lbohwXNUdzL/R2aVUXyXWA="   crossorigin="anonymous"></script>
+    <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.css" />
+
+    <link type="text/css" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid-theme.min.css" />
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jsgrid/1.5.3/jsgrid.min.js"></script>
+  </head>
+  <body>
+    <h1>Threads</h1>
+    <div id="jsGrid-threads"></div>
+
+    <h1>Messages</h1>
+    <div id="jsGrid-messages"></div>
+
+    <script type="text/javascript">
+      var _data = {};
+      function reqListener () {
+        _data = JSON.parse(this.responseText)
+        $("#jsGrid-messages").jsGrid({
+          width: "100%",
+          inserting: false,
+          editing: false,
+          sorting: true,
+          paging: true,
+          autoload: true,
+          filtering: true,
+
+          controller:{
+            loadData: function(filter){
+              console.log(filter.thread)
+              var filteredData = []
+              for (var i = 0; i < _data.messages.length; i++) {
+                if (filter.thread === _data.messages[i].thread) {
+                console.log(_data.messages[i].thread);
+                filteredData.push(_data.messages[i])
+                }
+              }
+              return filteredData
+              // console.log(_data)
+              // return _data['messages']
+            }
+          },
+
+          fields: [
+            { name: "thread", type: "select", items: _data.threads, valueField: "name", textField: "name"} ,
+            // { name: "thread", type: "text"},
+            { name: "timestamp", type: "number", width: 50 },
+            { name: "author", type: "text", width: 150 },
+            { name: "text", type: "text", width: 200 },
+            { type: "control" }
+          ]
+
+        });
+
+        $("#jsGrid-threads").jsGrid({
+          width: "100%",
+          inserting: false,
+          editing: true,
+          sorting: true,
+          paging: true,
+          autoload: true,
+          filtering: false,
+
+          controller:{
+            loadData: function(){
+              return _data.threads
+              // console.log(_data)
+              // return _data['messages']
+            },
+            updateItem: function(item){
+              console.log(item)
+              var updateReq = new XMLHttpRequest();
+              updateReq.open("GET", "renamethread?id="+item.id+"&new_name="+item.name);
+              updateReq.send();
+            }
+          },
+
+          fields: [
+            { name: "name", type: "text"},
+            { name: "participants", type: "text"},
+            { type: "control" }
+          ]
+
+        });
+
+
+
+      }
+
+      var oReq = new XMLHttpRequest();
+      oReq.addEventListener("load", reqListener);
+      oReq.open("GET", "data");
+      oReq.send();
+    </script>
+  </body>
+</html>
